@@ -1,0 +1,75 @@
+# Github bot using github action
+
+### Github bot capture timelapse pictur of my website
+[Click here to go to repo](https://github.com/ronnapatp/timelapse)
+Using [github action](https://github.com/features/actions) name "timelapse.yml" forked from [dtinth/timelapse](https://github.com/dtinth/timelapse)
+To see my bot account [Click here!](https://github.com/potbye)
+```
+name: Timelapse
+on:
+  push: {}
+  schedule:
+    - cron: '0 */1 * * *'
+  issues:
+    types: [labeled]
+  workflow_dispatch: {}
+jobs:
+  timelapse:
+    runs-on: ubuntu-20.04
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'push') ||
+      (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.issue.number == 1 && github.event.issue.labels[0].name == 'trigger')
+    steps:
+      - name: unlabel (if labeled)
+        run: |
+          curl -X DELETE "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/1/labels/trigger?access_token=${{ secrets.GITHUB_TOKEN }}"
+        if: github.event_name == 'issues'
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - name: Install emoji support
+        run: |
+          sudo apt-get install fonts-noto-color-emoji fonts-noto -y
+      - run: yarn
+      - run: node main.js
+        env:
+          GIT_COMMITTER_NAME: <your bot username>
+          GIT_AUTHOR_NAME: <your bot username>
+          EMAIL: <your bot user name>@users.noreply.github.com
+      - name: Save changed files
+        run: |
+          git diff --name-only origin/main | tee /tmp/changes.filelist.txt
+      - name: git push
+        run: |
+          git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY.git" "$GITHUB_REF"
+      - run: |
+          node << 'EOF'
+            const fs = require('fs')
+            const { execSync } = require('child_process')
+            const filelist = "/tmp/changes.filelist.txt"
+            const changed = (fs.existsSync(filelist) && fs.readFileSync("/tmp/changes.filelist.txt", "utf-8").match(/\S+\.png/g)) || []
+            const head = String(execSync('git rev-parse HEAD')).trim()
+            for (const filename of changed) {
+              console.log(filename)
+              const url = `https://github.com/${{ github.repository }}/raw/${head}/${filename}`
+              const input = JSON.stringify({
+                text: `Updated ${filename}`,
+                blocks: [{ type: 'image', alt_text: 'Screenshot', title: { type: 'plain_text', text: filename }, image_url: url }]
+              })
+              console.log(input)
+              try {
+                execSync('curl -X POST -H "Content-type: application/json" -d @- "${{ secrets.SLACK_WEBHOOK_URL }}"', {
+                  input,
+                  stdio: ['pipe', 'inherit', 'inherit']
+                })
+              } catch (error) {
+                console.error(error)
+              }
+            }
+          EOF
+
+```
+13/8/2021 8:33 PM

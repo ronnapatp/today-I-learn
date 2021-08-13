@@ -1,4 +1,3 @@
-# today-I-learn
-Today I learned
+# Today I learned
 
-- Javascript
+- [Github bot using github action]() (12/8/2021)
