@@ -1,6 +1,6 @@
 # Github bot using github action
 
-### Github bot capture timelapse pictur of my website
+### Github bot capture timelapse picture of my website
 [Click here to go to repo](https://github.com/ronnapatp/timelapse)
 Using [github action](https://github.com/features/actions) name "timelapse.yml" forked from [dtinth/timelapse](https://github.com/dtinth/timelapse)
 To see my bot account [Click here!](https://github.com/potbye)
